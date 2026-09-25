@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindHealth — a safe space to talk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --paper: #fffbf3;
+            --ink: #201f33;
+            --line: #d8d3c4;
+
+            --user-bubble: #8f7bff;
+            --bot-bubble: #ffd86b;
+            --accent: #ff6f59;
+            --mint: #46c8b8;
+
+            --focus: #4a3fd6;
+
+            /* Crisis / care palette stays sober on purpose — see note below */
+            --care-bg: #ffe3de;
+            --care-border: #cf3b2c;
+            --care-text: #6e1f14;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 28px;
+            background-color: #f4ecdb;
+            /* halftone screen-tone texture — classic comic print feel */
+            background-image: radial-gradient(circle, rgba(32, 31, 51, 0.09) 1.3px, transparent 1.5px);
+            background-size: 15px 15px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 660px;
+            height: min(800px, 92vh);
+            background: var(--paper);
+            border: 3px solid var(--ink);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* hard offset shadow, no blur — comic panel, not soft SaaS card */
+            box-shadow: 9px 9px 0 var(--ink);
+        }
+
+        /* ---- header ---- */
+        header {
+            padding: 20px 24px 16px;
+            border-bottom: 3px solid var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            background: var(--bot-bubble);
+        }
+
+        .pulse {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2.5px solid var(--ink);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .pulse::after {
+            content: "";
+            position: absolute;
+            inset: -7px;
+            border-radius: 50%;
+            border: 2px solid var(--ink);
+            opacity: 0.45;
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(0.85);
+                opacity: 0.45;
+            }
+
+            50% {
+                transform: scale(1.55);
+                opacity: 0;
+            }
+        }
+
+        header h1 {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 25px;
+            line-height: 1;
+            color: var(--ink);
+            /* offset color shadow = comic misprint / registration look,
+               the one bold typographic moment on the page */
+            text-shadow: 3px 3px 0 var(--paper);
+        }
+
+        header p {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 12.5px;
+            color: var(--ink);
+            margin-top: 3px;
+            opacity: 0.75;
+        }
+
+        /* ---- crisis banner (hidden by default) ----
+           Deliberately NOT comic-styled: flat, no hard shadow, no bounce.
+           When this shows up, the tone needs to shift immediately. */
+        .crisis-banner {
+            display: none;
+            margin: 14px 24px 0;
+            background: var(--care-bg);
+            border: 2px solid var(--care-border);
+            color: var(--care-text);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .crisis-banner.show {
+            display: block;
+        }
+
+        .crisis-banner strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 13.5px;
+        }
+
+        .crisis-banner a {
+            color: var(--care-text);
+            font-weight: 800;
+        }
+
+        /* ---- messages ---- */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: column;
+            max-width: 78%;
+        }
+
+        .row.user-row {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .row.bot-row {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .row+.row {
+            margin-top: 16px;
+        }
+
+        .message {
+            position: relative;
+            padding: 12px 16px;
+            line-height: 1.55;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: pre-wrap;
+            border: 2.5px solid var(--ink);
+        }
+
+        .user-message {
+            background: var(--user-bubble);
+            color: var(--paper);
+            border-radius: 16px 4px 16px 16px;
+        }
+
+        /* tail pointing right from the sharp top-right corner */
+        .user-message::before {
+            content: "";
+            position: absolute;
+            top: 6px;
+            right: -10px;
+            width: 0;
+            height: 0;
+            border-top: 9px solid transparent;
+            border-bottom: 0;
+            border-left: 10px solid var(--ink);
+        }
+
+        .user-message::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            right: -6px;
+            width: 0;
+            height: 0;
+            border-top: 7px solid transparent;
+            border-bottom: 0;
+            border-left: 8px solid var(--user-bubble);
+        }
+
+        .bot-message {
+            background: var(--bot-bubble);
+            color: var(--ink);
+            border-radius: 4px 16px 16px 16px;
+        }
+
+        /* tail pointing left from the sharp top-left corner */
+        .bot-message::before {
+            content: "";
+            position: absolute;
+            top: 6px;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border-top: 9px solid transparent;
+            border-bottom: 0;
+            border-right: 10px solid var(--ink);
+        }
+
+        .bot-message::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            left: -6px;
+            width: 0;
+            height: 0;
+            border-top: 7px solid transparent;
+            border-bottom: 0;
+            border-right: 8px solid var(--bot-bubble);
+        }
+
+        .msg-time {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--ink);
+            opacity: 0.55;
+            margin-top: 5px;
+            padding: 0 4px;
+        }
+
+        .typing {
+            display: inline-flex;
+            gap: 5px;
+            padding: 14px 18px;
+            background: var(--bot-bubble);
+            border: 2.5px solid var(--ink);
+            border-radius: 4px 16px 16px 16px;
+        }
+
+        .typing span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--ink);
+            animation: dot 1.2s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes dot {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.45;
+            }
+
+            30% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+
+        /* ---- mood chips (first turn only) ---- */
+        .checkin {
+            padding: 0 26px 18px;
+        }
+
+        .checkin p {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--ink);
+            margin-bottom: 9px;
+        }
+
+        .chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            border: 2.5px solid var(--ink);
+            background: var(--paper);
+            color: var(--ink);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 7px 15px;
+            border-radius: 100px;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 var(--ink);
+            transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+        }
+
+        .chip:hover {
+            background: var(--mint);
+        }
+
+        .chip:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 var(--ink);
+        }
+
+        .chip:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 2px;
+        }
+
+        /* ---- input ---- */
+        .chat-input {
+            border-top: 3px solid var(--ink);
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2.5px solid var(--ink);
+            border-radius: 14px;
+            background: var(--paper);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--ink);
+            outline: none;
+        }
+
+        .chat-input input:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 1px;
+        }
+
+        .chat-input button {
+            padding: 0 22px;
+            border: 2.5px solid var(--ink);
+            border-radius: 14px;
+            background: var(--accent);
+            color: var(--paper);
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--ink);
+            transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+        }
+
+        .chat-input button:hover {
+            background: #ff8570;
+        }
+
+        .chat-input button:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--ink);
+        }
+
+        .chat-input button:disabled {
+            background: var(--line);
+            color: #8b8672;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .foot-note {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink);
+            opacity: 0.55;
+            padding: 0 20px 16px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .pulse::after,
+            .typing span {
+                animation: none;
+            }
+        }
+
+        @media (max-width:600px) {
+            body {
+                padding: 0;
+            }
+
+            .app {
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .row {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header>
+            <div class="pulse"></div>
+            <div>
+                <h1>MindHealth</h1>
+                <p>A safe space to talk — nothing you say here is judged.</p>
+            </div>
+        </header>
+
+        <div class="crisis-banner" id="crisisBanner">
+            <strong>If you're in immediate danger, please reach out now.</strong>
+            In India, you can call the KIRAN helpline at 1800-599-0019 (24/7, free) or reach out to someone you trust
+            nearby. You don't have to go through this alone.
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="checkin" id="checkin">
+            <p>If it helps, how's today sitting with you?</p>
+            <div class="chips">
+                <button class="chip" data-mood="Heavy">Heavy</button>
+                <button class="chip" data-mood="Anxious">Anxious</button>
+                <button class="chip" data-mood="Okay, I guess">Okay, I guess</button>
+                <button class="chip" data-mood="Steady">Steady</button>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="message" placeholder="Tell me how you're feeling..." autocomplete="off">
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+        <p class="foot-note">MindHealth offers support, not a diagnosis or emergency care.</p>
+    </div>
+
+    <script>
+        const messageInput = document.getElementById("message");
+        const chatMessages = document.getElementById("chatMessages");
+        const sendButton = document.getElementById("sendButton");
+        const checkin = document.getElementById("checkin");
+        const crisisBanner = document.getElementById("crisisBanner");
+
+        // Client-side first pass only — a real deployment should also run this
+        // check server-side, since a determined user can bypass frontend JS.
+        const CRISIS_PATTERNS = [
+            /\bkill myself\b/i, /\bend my life\b/i, /\bsuicid(e|al)\b/i,
+            /\bself[\s-]?harm\b/i, /\bhurt myself\b/i, /\bcan'?t go on\b/i,
+            /\bno reason to live\b/i, /\bwant to die\b/i
+        ];
+
+        function containsCrisisLanguage(text) {
+            return CRISIS_PATTERNS.some(re => re.test(text));
+        }
+
+        function timeNow() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMessageRow(text, who) {
+            const row = document.createElement("div");
+            row.classList.add("row", who === "user" ? "user-row" : "bot-row");
+
+            const bubble = document.createElement("div");
+            bubble.classList.add("message", who === "user" ? "user-message" : "bot-message");
+            bubble.innerText = text;
+
+            const time = document.createElement("div");
+            time.classList.add("msg-time");
+            time.innerText = timeNow();
+
+            row.appendChild(bubble);
+            row.appendChild(time);
+            chatMessages.appendChild(row);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return bubble;
+        }
+
+        function showTyping() {
+            const row = document.createElement("div");
+            row.classList.add("row", "bot-row");
+            row.id = "typingRow";
+            row.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+            chatMessages.appendChild(row);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTyping() {
+            const t = document.getElementById("typingRow");
+            if (t) t.remove();
+        }
+
+        document.querySelectorAll(".chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                messageInput.value = chip.dataset.mood;
+                checkin.style.display = "none";
+                sendMessage();
+            });
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            checkin.style.display = "none";
+            addMessageRow(message, "user");
+            messageInput.value = "";
+            sendButton.disabled = true;
+
+            if (containsCrisisLanguage(message)) {
+                crisisBanner.classList.add("show");
+            }
+
+            showTyping();
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: message })
+                });
+
+                if (!response.ok) throw new Error("Server error");
+
+                removeTyping();
+                const botBubble = addMessageRow("", "bot");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    botBubble.innerText += chunk;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+
+            } catch (error) {
+                console.error(error);
+                removeTyping();
+                addMessageRow("Something went wrong on my end. Please try again in a moment.", "bot");
+            }
+
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+
+        messageInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

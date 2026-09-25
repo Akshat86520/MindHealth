@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
+
+:root {
+  --paper: #fffbf3;
+  --ink: #201f33;
+  --line: #d8d3c4;
+
+  --user-bubble: #8f7bff;
+  --bot-bubble: #ffd86b;
+  --accent: #ff6f59;
+  --mint: #46c8b8;
+
+  --focus: #4a3fd6;
+
+  --care-bg: #ffe3de;
+  --care-border: #cf3b2c;
+  --care-text: #6e1f14;
+}
+
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Full page */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Body */
+body {
+  font-family: "Nunito", sans-serif;
+  color: var(--ink);
+
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 28px;
+
+  background-color: #f4ecdb;
+
+  background-image: radial-gradient(
+    circle,
+    rgba(32, 31, 51, 0.09) 1.3px,
+    transparent 1.5px
+  );
+
+  background-size: 15px 15px;
+}
+
+/* React root */
+#root {
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Buttons and inputs */
+button,
+input {
+  font: inherit;
+}

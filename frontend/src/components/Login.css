@@ -1,0 +1,472 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap");
+
+/* =========================
+   LOGIN PAGE
+   ========================= */
+
+.login-page {
+    --bg-cream: #f6ecd3;
+    --card-cream: #fdf6e3;
+    --panel-cream: #f3e7c6;
+    --ink: #33241a;
+    --ink-soft: #6b5842;
+    --line: #d8c9a3;
+
+    --orange: #ff7b3d;
+    --orange-deep: #e8631f;
+    --blue: #3f8fd1;
+    --green: #57b56b;
+    --heart-red: #e5484d;
+    --yellow: #ffd166;
+
+    --focus: #3f8fd1;
+
+    width: 100%;
+    min-height: 100vh;
+
+    font-family: "VT323", monospace;
+    font-size: 18px;
+    color: var(--ink);
+
+    background-color: var(--bg-cream);
+
+    background-image:
+        linear-gradient(rgba(51, 36, 26, 0.05) 1px,
+            transparent 1px),
+        linear-gradient(90deg,
+            rgba(51, 36, 26, 0.05) 1px,
+            transparent 1px);
+
+    background-size: 16px 16px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Reset only inside login page */
+
+.login-page *,
+.login-page *::before,
+.login-page *::after {
+    box-sizing: border-box;
+}
+
+/* =========================
+   PIXEL STRIPE
+   ========================= */
+
+.pixel-stripe {
+    width: 100%;
+    height: 16px;
+    flex-shrink: 0;
+
+    background: repeating-linear-gradient(90deg,
+            var(--ink) 0 16px,
+            var(--ink-soft) 16px 32px,
+            var(--orange) 32px 48px,
+            var(--yellow) 48px 64px,
+            var(--green) 64px 80px,
+            var(--blue) 80px 96px);
+}
+
+/* =========================
+   PAGE WRAPPER
+   ========================= */
+
+.page-wrap {
+    width: 100%;
+    flex: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 32px 20px;
+}
+
+/* =========================
+   AUTH CARD
+   ========================= */
+
+.authCard {
+    width: 100%;
+    max-width: 420px;
+
+    background: var(--card-cream);
+
+    border: 4px solid var(--ink);
+    border-radius: 14px;
+
+    box-shadow: 8px 8px 0 var(--ink);
+
+    overflow: hidden;
+}
+
+/* =========================
+   HEADER
+   ========================= */
+
+.card-header {
+    padding: 22px 24px 18px;
+
+    border-bottom: 3px solid var(--ink);
+
+    background: var(--yellow);
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* =========================
+   PIXEL HEART
+   ========================= */
+
+.mascot {
+    width: 34px;
+    height: 34px;
+
+    min-width: 34px;
+    min-height: 34px;
+
+    flex-shrink: 0;
+
+    display: block;
+
+    image-rendering: pixelated;
+}
+
+/* =========================
+   BRAND
+   ========================= */
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-text h1 {
+    margin: 0;
+
+    font-family: "Press Start 2P", cursive;
+    font-size: 13px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--ink);
+
+    line-height: 1.4;
+}
+
+/* SAVE POINT */
+
+.badge {
+    display: inline-block;
+
+    width: fit-content;
+
+    margin-top: 6px;
+
+    font-family: "Press Start 2P", cursive;
+    font-size: 8px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--card-cream);
+
+    background: var(--ink);
+
+    padding: 4px 8px;
+
+    border-radius: 4px;
+}
+
+/* =========================
+   TABS
+   ========================= */
+
+.tabs {
+    display: flex;
+
+    border-bottom: 3px solid var(--ink);
+}
+
+.tab {
+    flex: 1;
+
+    padding: 12px 0;
+
+    text-align: center;
+
+    font-family: "Press Start 2P", cursive;
+    font-size: 10.5px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--ink-soft);
+
+    background: var(--panel-cream);
+
+    border: none;
+    border-right: 3px solid var(--ink);
+
+    cursor: pointer;
+}
+
+.tab:last-child {
+    border-right: none;
+}
+
+.tab.active {
+    background: var(--card-cream);
+    color: var(--ink);
+}
+
+.tab:hover {
+    background: var(--card-cream);
+}
+
+.tab:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+}
+
+/* =========================
+   FORM PANEL
+   ========================= */
+
+.panel {
+    padding: 24px 24px 20px;
+}
+
+/* =========================
+   FORM FIELD
+   ========================= */
+
+.field {
+    margin-bottom: 16px;
+}
+
+.field label {
+    display: block;
+
+    font-size: 14px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--ink-soft);
+
+    margin-bottom: 6px;
+
+    text-transform: uppercase;
+}
+
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="password"] {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    font-family: "VT323", monospace;
+    font-size: 19px;
+
+    color: var(--ink);
+
+    background: var(--card-cream);
+
+    border: 3px solid var(--ink);
+    border-radius: 6px;
+
+    outline: none;
+}
+
+.field input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 1px;
+}
+
+/* =========================
+   REMEMBER ME / FORGOT
+   ========================= */
+
+.row-between {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+
+    font-size: 14px;
+}
+
+.checkbox-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+
+    accent-color: var(--orange);
+
+    border: 2px solid var(--ink);
+}
+
+.row-between a {
+    color: var(--blue);
+
+    text-decoration: none;
+
+    border-bottom: 1px dashed var(--blue);
+}
+
+.row-between a:hover {
+    color: var(--orange-deep);
+}
+
+/* =========================
+   SUBMIT BUTTON
+   ========================= */
+
+.submit-btn {
+    width: 100%;
+
+    padding: 13px 0;
+
+    font-family: "Press Start 2P", cursive;
+    font-size: 11px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--card-cream);
+
+    background: var(--orange);
+
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+
+    box-shadow: 4px 4px 0 var(--ink);
+
+    cursor: pointer;
+
+    transition:
+        transform 0.08s ease,
+        box-shadow 0.08s ease,
+        background 0.15s ease;
+}
+
+.submit-btn:hover {
+    background: var(--orange-deep);
+}
+
+.submit-btn:active {
+    transform: translate(4px, 4px);
+
+    box-shadow: 0 0 0 var(--ink);
+}
+
+.submit-btn:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* =========================
+   SWITCH LOGIN / SIGNUP
+   ========================= */
+
+.switch-text {
+    text-align: center;
+
+    font-size: 15px;
+
+    color: var(--ink-soft);
+
+    margin-top: 16px;
+}
+
+.switch-text button {
+    font-family: "VT323", monospace;
+    font-size: 15px;
+
+    color: var(--blue);
+
+    background: none;
+
+    border: none;
+
+    border-bottom: 1px dashed var(--blue);
+
+    cursor: pointer;
+
+    padding: 0;
+}
+
+.switch-text button:hover {
+    color: var(--orange-deep);
+}
+
+/* =========================
+   LOGIN MESSAGE
+   ========================= */
+
+.auth-message {
+    text-align: center;
+
+    font-size: 15px;
+
+    color: var(--ink-soft);
+
+    padding: 0 24px 12px;
+
+    margin: 0;
+}
+
+/* =========================
+   FOOTER
+   ========================= */
+
+.foot-note {
+    text-align: center;
+
+    font-size: 13px;
+
+    color: var(--ink-soft);
+
+    padding: 0 22px 18px;
+
+    margin: 0;
+}
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 480px) {
+    .page-wrap {
+        padding: 20px 14px;
+    }
+
+    .authCard {
+        box-shadow: 6px 6px 0 var(--ink);
+    }
+
+    .card-header {
+        padding: 20px 18px 16px;
+    }
+
+    .panel {
+        padding: 20px 18px 18px;
+    }
+}
