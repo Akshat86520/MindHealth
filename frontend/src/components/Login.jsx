@@ -2,7 +2,9 @@
 import { useState } from "react"
 import "./Login.css"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://mindhealth-vyjs.onrender.com"
 
 function Login({ onLoginSuccess }) {
     const [mode, setMode] = useState("login")
@@ -17,6 +19,10 @@ function Login({ onLoginSuccess }) {
 
     const [message, setMessage] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+
+    // =========================================================
+    // LOGIN
+    // =========================================================
 
     async function handleLogin(event) {
         event.preventDefault()
@@ -57,6 +63,10 @@ function Login({ onLoginSuccess }) {
             setIsLoading(false)
         }
     }
+
+    // =========================================================
+    // SIGNUP
+    // =========================================================
 
     async function handleSignup(event) {
         event.preventDefault()
@@ -109,12 +119,19 @@ function Login({ onLoginSuccess }) {
         }
     }
 
+    // =========================================================
+    // USER INTERFACE
+    // =========================================================
+
     return (
         <div className="login-page">
             <div className="pixel-stripe"></div>
 
             <div className="page-wrap">
                 <div className="authCard">
+
+                    {/* HEADER */}
+
                     <div className="card-header">
                         <svg
                             className="mascot"
@@ -142,6 +159,8 @@ function Login({ onLoginSuccess }) {
                         </div>
                     </div>
 
+                    {/* LOGIN AND SIGNUP TABS */}
+
                     <div className="tabs">
                         <button
                             type="button"
@@ -165,6 +184,8 @@ function Login({ onLoginSuccess }) {
                             SIGN UP
                         </button>
                     </div>
+
+                    {/* LOGIN FORM */}
 
                     {mode === "login" && (
                         <div className="panel">
@@ -240,6 +261,8 @@ function Login({ onLoginSuccess }) {
                             </p>
                         </div>
                     )}
+
+                    {/* SIGNUP FORM */}
 
                     {mode === "signup" && (
                         <div className="panel">
@@ -338,15 +361,20 @@ function Login({ onLoginSuccess }) {
                         </div>
                     )}
 
+                    {/* STATUS MESSAGE */}
+
                     {message && (
                         <p className="auth-message" role="status">
                             {message}
                         </p>
                     )}
 
+                    {/* FOOTER */}
+
                     <p className="foot-note">
                         MindHealth offers support, not a diagnosis or emergency care.
                     </p>
+
                 </div>
             </div>
         </div>

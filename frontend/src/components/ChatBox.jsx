@@ -1,8 +1,10 @@
-
 import { useEffect, useState } from "react"
 import ChatCard from "./ChatCard"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+// Backend API URL
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://mindhealth-vyjs.onrender.com"
 
 function getCurrentTime() {
     return new Date().toLocaleTimeString([], {
@@ -67,15 +69,21 @@ function ChatBox() {
         loadChatHistory()
     }, [])
 
+    // Logout
     async function handleLogout() {
         try {
-            const response = await fetch(`${API_BASE_URL}/logout`, {
-                method: "GET",
-                credentials: "include",
-            })
+            const response = await fetch(
+                `${API_BASE_URL}/logout`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            )
 
             if (!response.ok) {
-                throw new Error(`Logout failed: ${response.status}`)
+                throw new Error(
+                    `Logout failed: ${response.status}`
+                )
             }
 
             window.location.reload()
@@ -84,6 +92,7 @@ function ChatBox() {
         }
     }
 
+    // Send message
     async function handleSend() {
         const text = message.trim()
 
@@ -107,19 +116,23 @@ function ChatBox() {
         setIsLoading(true)
 
         try {
-            const response = await fetch(`${API_BASE_URL}/chat`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    message: text,
-                }),
-            })
+            const response = await fetch(
+                `${API_BASE_URL}/chat`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        message: text,
+                    }),
+                }
+            )
 
             if (!response.ok) {
                 const errorText = await response.text()
+
                 throw new Error(
                     `Chat request failed (${response.status}): ${errorText}`
                 )
@@ -197,6 +210,7 @@ function ChatBox() {
         }
     }
 
+    // Send message when Enter is pressed
     function handleKeyDown(event) {
         if (event.key === "Enter") {
             event.preventDefault()
