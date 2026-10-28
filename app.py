@@ -1,4 +1,4 @@
-from email import message
+from flask_cors import CORS
 
 from flask import (
     Flask,
@@ -10,14 +10,13 @@ from flask import (
     redirect,
     url_for,
 )
+
 from google import genai
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import os
-import secrets
 import sqlite3
-import warnings
 
 
 # =========================================================
@@ -28,14 +27,25 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Keep this value fixed in .env so login sessions survive
-# Flask restarts.
-app.secret_key = os.getenv(
-    "FLASK_SECRET_KEY",
-    "dev-only-change-this-secret-key"
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY is missing.")
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE="None",
 )
 
-DATABASE = "mindhealth.db"
+CORS(
+    app,
+    origins=["https://mindhealth-snowy.vercel.app"],
+    supports_credentials=True,
+)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "mindhealth.db")
 
 
 # =========================================================
@@ -46,7 +56,7 @@ api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
     raise RuntimeError(
-        "GEMINI_API_KEY is missing. Add it to your .env file."
+        "GEMINI_API_KEY is missing. Add it to your environment variables."
     )
 
 client = genai.Client(api_key=api_key)
@@ -61,50 +71,63 @@ def get_db_connection():
     connection.row_factory = sqlite3.Row
     return connection
 
+
 def save_chat_message(user_id, message, sender):
     connection = get_db_connection()
 
-    connection.execute(
-        """
-        INSERT INTO chat_history (user_id, message, sender)
-        VALUES (?, ?, ?)
-        """,
-        (user_id, message, sender)
-    )
+    try:
+        connection.execute(
+            """
+            INSERT INTO chat_history (user_id, message, sender)
+            VALUES (?, ?, ?)
+            """,
+            (user_id, message, sender),
+        )
 
-    connection.commit()
-    connection.close()
+        connection.commit()
+
+    finally:
+        connection.close()
+
 
 def init_db():
     connection = get_db_connection()
 
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    try:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
         )
-        """
-    )
 
-    connection.execute(
-    """
-    CREATE TABLE IF NOT EXISTS chat_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        message TEXT NOT NULL,
-        sender TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-       )
-       """
-    )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS chat_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                sender TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+            """
+        )
 
-    connection.commit()
-    connection.close()
+        connection.commit()
+
+    finally:
+        connection.close()
+
+
+# Initialize the database when the application starts.
+# This also runs when Gunicorn imports the application on Render.
+init_db()
 
 
 # =========================================================
@@ -243,22 +266,35 @@ def detect_safety_risk(message):
         "want to hurt her",
     ]
 
-    if any(phrase in text for phrase in harm_to_others_phrases):
+    if any(
+        phrase in text
+        for phrase in harm_to_others_phrases
+    ):
         return "HARM_TO_OTHERS"
 
     high_score = sum(
-        5 for phrase in high_risk_phrases if phrase in text
+        5
+        for phrase in high_risk_phrases
+        if phrase in text
     )
 
     moderate_score = sum(
-        3 for phrase in moderate_phrases if phrase in text
+        3
+        for phrase in moderate_phrases
+        if phrase in text
     )
 
     indirect_score = sum(
-        1 for phrase in indirect_phrases if phrase in text
+        1
+        for phrase in indirect_phrases
+        if phrase in text
     )
 
-    total_score = high_score + moderate_score + indirect_score
+    total_score = (
+        high_score
+        + moderate_score
+        + indirect_score
+    )
 
     if total_score >= 5:
         return "HIGH"
@@ -287,14 +323,13 @@ def home():
 
 @app.route("/signup", methods=["POST"])
 def signup():
-
     data = request.get_json(silent=True)
 
     if not data:
         return Response(
             "No data received.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     name = data.get("name", "").strip()
@@ -302,26 +337,25 @@ def signup():
     password = data.get("password", "")
     confirm_password = data.get("confirm", "")
 
-    # Validation
     if not name or not email or not password:
         return Response(
             "Please fill in all required fields.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     if password != confirm_password:
         return Response(
             "Passwords do not match.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     if len(password) < 8:
         return Response(
             "Password must be at least 8 characters.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     connection = get_db_connection()
@@ -334,31 +368,28 @@ def signup():
             INSERT INTO users (name, email, password)
             VALUES (?, ?, ?)
             """,
-            (name, email, hashed_password)
+            (name, email, hashed_password),
         )
 
         connection.commit()
 
         user_id = cursor.lastrowid
 
-        # Start a fresh authenticated session
         session.clear()
-
         session["user_id"] = user_id
         session["user_name"] = name
 
         return Response(
             "Signup successful.",
             status=201,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     except sqlite3.IntegrityError:
-
         return Response(
             "An account with this email already exists.",
             status=409,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     finally:
@@ -371,14 +402,13 @@ def signup():
 
 @app.route("/login", methods=["POST"])
 def login():
-
     data = request.get_json(silent=True)
 
     if not data:
         return Response(
             "No data received.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     email = data.get("email", "").strip().lower()
@@ -388,50 +418,54 @@ def login():
         return Response(
             "Please enter your email and password.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     connection = get_db_connection()
 
-    user = connection.execute(
-        """
-        SELECT id, name, email, password
-        FROM users
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
+    try:
+        user = connection.execute(
+            """
+            SELECT id, name, email, password
+            FROM users
+            WHERE email = ?
+            """,
+            (email,),
+        ).fetchone()
 
-    connection.close()
+    finally:
+        connection.close()
 
     if user is None:
         return Response(
             "Invalid email or password.",
             status=401,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
-    if not check_password_hash(user["password"], password):
+    if not check_password_hash(
+        user["password"],
+        password,
+    ):
         return Response(
             "Invalid email or password.",
             status=401,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
-    # Create authenticated session
     session.clear()
-
     session["user_id"] = user["id"]
     session["user_name"] = user["name"]
 
     return Response(
         "Login successful.",
         status=200,
-        mimetype="text/plain"
+        mimetype="text/plain",
     )
 
+
 # =========================================================
-# Session Management
+# SESSION MANAGEMENT
 # =========================================================
 
 @app.route("/session", methods=["GET"])
@@ -448,7 +482,7 @@ def check_session():
 
 
 # =========================================================
-#   chat-history  
+# CHAT HISTORY
 # =========================================================
 
 @app.route("/chat-history", methods=["GET"])
@@ -460,17 +494,19 @@ def chat_history():
 
     connection = get_db_connection()
 
-    rows = connection.execute(
-        """
-        SELECT id, message, sender, created_at
-        FROM chat_history
-        WHERE user_id = ?
-        ORDER BY id ASC
-        """,
-        (session["user_id"],)
-    ).fetchall()
+    try:
+        rows = connection.execute(
+            """
+            SELECT id, message, sender, created_at
+            FROM chat_history
+            WHERE user_id = ?
+            ORDER BY id ASC
+            """,
+            (session["user_id"],),
+        ).fetchall()
 
-    connection.close()
+    finally:
+        connection.close()
 
     return {
         "messages": [
@@ -489,12 +525,13 @@ def chat_history():
 # LOGOUT
 # =========================================================
 
-@app.route("/logout")
+@app.route("/logout", methods=["POST", "GET"])
 def logout():
-
     session.clear()
 
-    return redirect(url_for("home"))
+    return {
+        "message": "Logged out successfully."
+    }, 200
 
 
 # =========================================================
@@ -503,13 +540,12 @@ def logout():
 
 @app.route("/chat-page")
 def chat_page():
-
     if "user_id" not in session:
         return redirect(url_for("home"))
 
     return render_template(
         "chat.html",
-        user_name=session.get("user_name", "User")
+        user_name=session.get("user_name", "User"),
     )
 
 
@@ -519,21 +555,12 @@ def chat_page():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-
-    # -----------------------------
-    # Authentication check
-    # -----------------------------
-
     if "user_id" not in session:
         return Response(
             "Please log in first.",
             status=401,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
-
-    # -----------------------------
-    # Read request
-    # -----------------------------
 
     data = request.get_json(silent=True)
 
@@ -541,7 +568,7 @@ def chat():
         return Response(
             "No data received.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     user_message = data.get("message", "").strip()
@@ -550,149 +577,91 @@ def chat():
         return Response(
             "Please enter a message.",
             status=400,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
-    # -----------------------------
-    # Get logged-in user
-    # -----------------------------
-
     user_id = session["user_id"]
-
-    # -----------------------------
-    # Save user's message
-    # -----------------------------
 
     save_chat_message(
         user_id,
         user_message,
-        "user"
+        "user",
     )
-
-    # -----------------------------
-    # Safety detection
-    # -----------------------------
 
     risk_level = detect_safety_risk(user_message)
 
     if risk_level == "HIGH":
-
         save_chat_message(
             user_id,
             SAFETY_RESPONSE,
-            "bot"
+            "bot",
         )
 
         return Response(
             SAFETY_RESPONSE,
             status=200,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     if risk_level == "MODERATE":
-
         save_chat_message(
             user_id,
             MODERATE_SAFETY_RESPONSE,
-            "bot"
+            "bot",
         )
 
         return Response(
             MODERATE_SAFETY_RESPONSE,
             status=200,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
 
     if risk_level == "HARM_TO_OTHERS":
-
         save_chat_message(
             user_id,
             HARM_TO_OTHERS_RESPONSE,
-            "bot"
+            "bot",
         )
 
         return Response(
             HARM_TO_OTHERS_RESPONSE,
             status=200,
-            mimetype="text/plain"
+            mimetype="text/plain",
         )
-
-    # -----------------------------
-    # Previous Gemini interaction
-    # -----------------------------
 
     previous_interaction_id = session.get(
         "previous_interaction_id"
     )
 
-    # =====================================================
-    # Gemini streaming generator
-    # =====================================================
-
     def generate(message, previous_id):
-
         new_interaction_id = previous_id
-
-        # Store complete Gemini response
         bot_text = ""
 
         try:
-
-            # -----------------------------
-            # Create Gemini interaction
-            # -----------------------------
-
             stream = client.interactions.create(
                 model="gemini-3.6-flash",
                 input=message,
                 system_instruction=MINDHEALTH_INSTRUCTION,
                 previous_interaction_id=previous_id,
-                stream=True
+                stream=True,
             )
 
-            # -----------------------------
-            # Read Gemini stream
-            # -----------------------------
-
             for event in stream:
-
-                # -----------------------------
-                # Interaction completed
-                # -----------------------------
-
                 if event.event_type == "interaction.completed":
-
-                    new_interaction_id = (
-                        event.interaction.id
-                    )
-
-                # -----------------------------
-                # Stream text
-                # -----------------------------
+                    new_interaction_id = event.interaction.id
 
                 elif event.event_type == "step.delta":
-
                     if event.delta.type == "text":
-
                         text = event.delta.text
 
                         if text:
-
-                            # Build complete response
                             bot_text += text
-
-                            # Send chunk to React
                             yield text
 
-                # -----------------------------
-                # Gemini error
-                # -----------------------------
-
                 elif event.event_type == "error":
-
                     print(
                         "GEMINI API ERROR:",
-                        event.error.message
+                        event.error.message,
                     )
 
                     bot_text = (
@@ -702,28 +671,17 @@ def chat():
                     )
 
                     yield bot_text
-
                     break
 
-            # -----------------------------
-            # Save complete bot response
-            # -----------------------------
-
             if bot_text:
-
                 save_chat_message(
                     user_id,
                     bot_text,
-                    "bot"
+                    "bot",
                 )
 
-        # -----------------------------
-        # Python / Gemini exception
-        # -----------------------------
-
-        except Exception as e:
-
-            print("Gemini Error:", e)
+        except Exception as error:
+            print("Gemini Error:", error)
 
             bot_text = (
                 "I'm having a little trouble responding right now. "
@@ -733,43 +691,31 @@ def chat():
             save_chat_message(
                 user_id,
                 bot_text,
-                "bot"
+                "bot",
             )
 
             yield bot_text
 
-        # -----------------------------
-        # Save Gemini interaction ID
-        # -----------------------------
-
         finally:
-
-            session["previous_interaction_id"] = (
-                new_interaction_id
-            )
-
-    # =====================================================
-    # Return streaming response
-    # =====================================================
+            # Flask's default session is cookie-based.
+            # Updating it after streaming starts may not persist.
+            # See the deployment note below.
+            session["previous_interaction_id"] = new_interaction_id
 
     return Response(
         stream_with_context(
             generate(
                 user_message,
-                previous_interaction_id
+                previous_interaction_id,
             )
         ),
-        mimetype="text/plain"
+        mimetype="text/plain",
     )
+
 
 # =========================================================
 # START APPLICATION
 # =========================================================
 
 if __name__ == "__main__":
-
-    init_db()
-
-    app.run(
-        debug=True
-    )
+    app.run(debug=True)
