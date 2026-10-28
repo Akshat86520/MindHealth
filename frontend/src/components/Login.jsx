@@ -1,5 +1,8 @@
+
 import { useState } from "react"
 import "./Login.css"
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 function Login({ onLoginSuccess }) {
     const [mode, setMode] = useState("login")
@@ -21,11 +24,12 @@ function Login({ onLoginSuccess }) {
         setIsLoading(true)
 
         try {
-            const response = await fetch("/login", {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({
                     email: loginEmail,
                     password: loginPassword,
@@ -35,7 +39,7 @@ function Login({ onLoginSuccess }) {
             const data = await response.text()
 
             if (!response.ok) {
-                setMessage(data)
+                setMessage(data || "Login failed. Please try again.")
                 return
             }
 
@@ -46,7 +50,9 @@ function Login({ onLoginSuccess }) {
             }
         } catch (error) {
             console.error("Login error:", error)
-            setMessage("Unable to connect to the server.")
+            setMessage(
+                "Unable to connect to the server. Please try again."
+            )
         } finally {
             setIsLoading(false)
         }
@@ -64,11 +70,12 @@ function Login({ onLoginSuccess }) {
         setIsLoading(true)
 
         try {
-            const response = await fetch("/signup", {
+            const response = await fetch(`${API_BASE_URL}/signup`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({
                     name: signupName,
                     email: signupEmail,
@@ -80,12 +87,11 @@ function Login({ onLoginSuccess }) {
             const data = await response.text()
 
             if (!response.ok) {
-                setMessage(data)
+                setMessage(data || "Signup failed. Please try again.")
                 return
             }
 
             setMessage(data)
-
             setMode("login")
             setLoginEmail(signupEmail)
 
@@ -95,7 +101,9 @@ function Login({ onLoginSuccess }) {
             setSignupConfirm("")
         } catch (error) {
             console.error("Signup error:", error)
-            setMessage("Unable to connect to the server.")
+            setMessage(
+                "Unable to connect to the server. Please try again."
+            )
         } finally {
             setIsLoading(false)
         }
@@ -103,16 +111,11 @@ function Login({ onLoginSuccess }) {
 
     return (
         <div className="login-page">
-
             <div className="pixel-stripe"></div>
 
             <div className="page-wrap">
-
                 <div className="authCard">
-
-                    {/* Header */}
                     <div className="card-header">
-
                         <svg
                             className="mascot"
                             viewBox="0 0 7 7"
@@ -137,12 +140,9 @@ function Login({ onLoginSuccess }) {
                             <h1>MINDHEALTH</h1>
                             <span className="badge">SAVE POINT</span>
                         </div>
-
                     </div>
 
-                    {/* Tabs */}
                     <div className="tabs">
-
                         <button
                             type="button"
                             className={`tab ${mode === "login" ? "active" : ""}`}
@@ -164,17 +164,12 @@ function Login({ onLoginSuccess }) {
                         >
                             SIGN UP
                         </button>
-
                     </div>
 
-                    {/* LOGIN */}
                     {mode === "login" && (
                         <div className="panel">
-
                             <form onSubmit={handleLogin}>
-
                                 <div className="field">
-
                                     <label htmlFor="loginEmail">
                                         Email
                                     </label>
@@ -189,11 +184,9 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <div className="field">
-
                                     <label htmlFor="loginPassword">
                                         Password
                                     </label>
@@ -208,11 +201,9 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <div className="row-between">
-
                                     <label className="checkbox-row">
                                         <input
                                             type="checkbox"
@@ -221,10 +212,7 @@ function Login({ onLoginSuccess }) {
                                         Remember me
                                     </label>
 
-                                    <a href="#forgot">
-                                        Forgot?
-                                    </a>
-
+                                    <a href="#forgot">Forgot?</a>
                                 </div>
 
                                 <button
@@ -236,12 +224,10 @@ function Login({ onLoginSuccess }) {
                                         ? "LOADING..."
                                         : "PRESS START ▸"}
                                 </button>
-
                             </form>
 
                             <p className="switch-text">
                                 New here?{" "}
-
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -252,18 +238,13 @@ function Login({ onLoginSuccess }) {
                                     Create an account
                                 </button>
                             </p>
-
                         </div>
                     )}
 
-                    {/* SIGNUP */}
                     {mode === "signup" && (
                         <div className="panel">
-
                             <form onSubmit={handleSignup}>
-
                                 <div className="field">
-
                                     <label htmlFor="signupName">
                                         Name
                                     </label>
@@ -278,11 +259,9 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <div className="field">
-
                                     <label htmlFor="signupEmail">
                                         Email
                                     </label>
@@ -297,11 +276,9 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <div className="field">
-
                                     <label htmlFor="signupPassword">
                                         Password
                                     </label>
@@ -316,11 +293,9 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <div className="field">
-
                                     <label htmlFor="signupConfirm">
                                         Confirm password
                                     </label>
@@ -335,7 +310,6 @@ function Login({ onLoginSuccess }) {
                                         }
                                         required
                                     />
-
                                 </div>
 
                                 <button
@@ -347,12 +321,10 @@ function Login({ onLoginSuccess }) {
                                         ? "LOADING..."
                                         : "NEW GAME ▸"}
                                 </button>
-
                             </form>
 
                             <p className="switch-text">
                                 Already have an account?{" "}
-
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -363,26 +335,20 @@ function Login({ onLoginSuccess }) {
                                     Log in
                                 </button>
                             </p>
-
                         </div>
                     )}
 
-                    {/* MESSAGE */}
                     {message && (
-                        <p className="auth-message">
+                        <p className="auth-message" role="status">
                             {message}
                         </p>
                     )}
 
-                    {/* FOOTER */}
                     <p className="foot-note">
                         MindHealth offers support, not a diagnosis or emergency care.
                     </p>
-
                 </div>
-
             </div>
-
         </div>
     )
 }

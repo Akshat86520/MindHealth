@@ -1,5 +1,8 @@
+
 import { useEffect, useState } from "react"
 import ChatCard from "./ChatCard"
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 function getCurrentTime() {
     return new Date().toLocaleTimeString([], {
@@ -17,10 +20,13 @@ function ChatBox() {
     useEffect(() => {
         async function loadChatHistory() {
             try {
-                const response = await fetch("/chat-history", {
-                    method: "GET",
-                    credentials: "include",
-                })
+                const response = await fetch(
+                    `${API_BASE_URL}/chat-history`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                )
 
                 if (!response.ok) {
                     throw new Error(
@@ -63,10 +69,14 @@ function ChatBox() {
 
     async function handleLogout() {
         try {
-            await fetch("/logout", {
+            const response = await fetch(`${API_BASE_URL}/logout`, {
                 method: "GET",
                 credentials: "include",
             })
+
+            if (!response.ok) {
+                throw new Error(`Logout failed: ${response.status}`)
+            }
 
             window.location.reload()
         } catch (error) {
@@ -83,7 +93,7 @@ function ChatBox() {
 
         const userMessage = {
             id: Date.now(),
-            text: text,
+            text,
             sender: "user",
             time: getCurrentTime(),
         }
@@ -97,7 +107,7 @@ function ChatBox() {
         setIsLoading(true)
 
         try {
-            const response = await fetch("/chat", {
+            const response = await fetch(`${API_BASE_URL}/chat`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -109,7 +119,10 @@ function ChatBox() {
             })
 
             if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`)
+                const errorText = await response.text()
+                throw new Error(
+                    `Chat request failed (${response.status}): ${errorText}`
+                )
             }
 
             if (!response.body) {
@@ -137,14 +150,13 @@ function ChatBox() {
                 const { value, done } = await reader.read()
 
                 if (done) {
+                    botText += decoder.decode()
                     break
                 }
 
-                const chunk = decoder.decode(value, {
+                botText += decoder.decode(value, {
                     stream: true,
                 })
-
-                botText += chunk
 
                 setMessages((previousMessages) =>
                     previousMessages.map((msg) =>
@@ -157,6 +169,17 @@ function ChatBox() {
                     )
                 )
             }
+
+            setMessages((previousMessages) =>
+                previousMessages.map((msg) =>
+                    msg.id === botMessageId
+                        ? {
+                            ...msg,
+                            text: botText,
+                        }
+                        : msg
+                )
+            )
         } catch (error) {
             console.error("Chat error:", error)
 

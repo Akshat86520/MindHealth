@@ -10,10 +10,13 @@ function App() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const response = await fetch("/session", {
-          method: "GET",
-          credentials: "include",
-        })
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/session`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        )
 
         const data = await response.json()
 
