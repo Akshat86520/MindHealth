@@ -3,6 +3,11 @@ import Login from "./components/Login"
 import ChatBox from "./components/ChatBox"
 import "./App.css"
 
+// ADD IT HERE — below imports, before function App()
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://mindhealth-vyjs.onrender.com";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
