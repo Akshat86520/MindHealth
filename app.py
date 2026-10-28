@@ -12,6 +12,7 @@ from flask import (
 )
 
 from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -59,7 +60,14 @@ if not api_key:
         "GEMINI_API_KEY is missing. Add it to your environment variables."
     )
 
-client = genai.Client(api_key=api_key)
+client = genai.Client(
+    api_key=api_key,
+    http_options=types.HttpOptions(
+        retry_options=types.HttpRetryOptions(
+            attempts=1,
+        )
+    ),
+)
 
 
 # =========================================================
