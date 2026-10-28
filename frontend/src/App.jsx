@@ -11,12 +11,16 @@ function App() {
     async function checkSession() {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/session`,
+          `${API_BASE_URL}/session`,
           {
             method: "GET",
             credentials: "include",
           }
-        )
+        );
+
+        if (!response.ok) {
+          throw new Error(`Session request failed: ${response.status}`);
+        }
 
         const data = await response.json()
 
